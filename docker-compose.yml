@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html
+      - ./backups:/var/www/html/backups
+      - ./logs:/var/www/html/logs
+    environment:
+      - APP_ENV=${APP_ENV}
+      - APP_DEBUG=${APP_DEBUG}
+      - APP_URL=${APP_URL}
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - JWT_SECRET=${JWT_SECRET}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS}
+      - MAX_BACKUPS=${MAX_BACKUPS}
+      - AUTO_BACKUP_TYPE=${AUTO_BACKUP_TYPE}
+      - AUTO_BACKUP_TIME=${AUTO_BACKUP_TIME}
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASS}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+    ports:
+      - "3306:3306"
+
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html
+      - ./backups:/var/www/html/backups
+      - ./logs:/var/www/html/logs
+    environment:
+      - APP_ENV=${APP_ENV}
+      - APP_DEBUG=${APP_DEBUG}
+      - APP_URL=${APP_URL}
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - JWT_SECRET=${JWT_SECRET}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS}
+      - MAX_BACKUPS=${MAX_BACKUPS}
+      - AUTO_BACKUP_TYPE=${AUTO_BACKUP_TYPE}
+      - AUTO_BACKUP_TIME=${AUTO_BACKUP_TIME}
+    command: >
+      bash -c "
+        echo '0 * * * * php /var/www/html/public/admin/cron/auto_backup.php' > /etc/cron.d/backup-cron &&
+        echo '0 1 * * * php /var/www/html/public/admin/cron/cleanup_backups.php' >> /etc/cron.d/backup-cron &&
+        chmod 0644 /etc/cron.d/backup-cron &&
+        crontab /etc/cron.d/backup-cron &&
+        cron -f"
+    depends_on:
+      - app
+      - db
+
+volumes:
+  db_data: 

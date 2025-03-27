@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  app:
+    volumes:
+      - ./backups:/var/www/html/backups
+      - ./logs:/var/www/html/logs
+
+  cron:
+    volumes:
+      - ./backups:/var/www/html/backups
+      - ./logs:/var/www/html/logs 

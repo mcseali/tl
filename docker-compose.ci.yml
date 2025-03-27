@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  app:
+    volumes:
+      - .:/var/www/html
+      - ./backups:/var/www/html/backups
+      - ./logs:/var/www/html/logs
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - DB_NAME=test_db
+      - DB_USER=test_user
+      - DB_PASS=test_pass
+      - DB_ROOT_PASS=test_root_pass
+      - BACKUP_RETENTION_DAYS=1
+      - MAX_BACKUPS=1
+      - AUTO_BACKUP_TYPE=database
+      - AUTO_BACKUP_TIME=00:00
+
+  db:
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_DATABASE=test_db
+      - MYSQL_USER=test_user
+      - MYSQL_PASSWORD=test_pass
+      - MYSQL_ROOT_PASSWORD=test_root_pass
+    ports:
+      - "3306:3306"
+
+  cron:
+    volumes:
+      - .:/var/www/html
+      - ./backups:/var/www/html/backups
+      - ./logs:/var/www/html/logs
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - DB_NAME=test_db
+      - DB_USER=test_user
+      - DB_PASS=test_pass
+      - DB_ROOT_PASS=test_root_pass
+      - BACKUP_RETENTION_DAYS=1
+      - MAX_BACKUPS=1
+      - AUTO_BACKUP_TYPE=database
+      - AUTO_BACKUP_TIME=00:00
+    command: >
+      bash -c "
+        echo '0 * * * * php /var/www/html/public/admin/cron/auto_backup.php' > /etc/cron.d/backup-cron &&
+        echo '0 1 * * * php /var/www/html/public/admin/cron/cleanup_backups.php' >> /etc/cron.d/backup-cron &&
+        chmod 0644 /etc/cron.d/backup-cron &&
+        crontab /etc/cron.d/backup-cron &&
+        cron -f"
+    depends_on:
+      - app
+      - db
+
+volumes:
+  db_data: 
