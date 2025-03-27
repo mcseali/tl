@@ -66,8 +66,8 @@ if ! command -v composer &> /dev/null; then
 fi
 
 # Get GitHub URL
-echo -e "${YELLOW}🌐 Enter GitHub project URL:${NC}"
-read -p "Please enter the GitHub project URL (e.g., https://github.com/username/telegram-ads-bot.git): " GITHUB_URL
+echo -e "${YELLOW}🌐 Setting up GitHub repository...${NC}"
+GITHUB_URL="https://github.com/mcseali/tl.git"
 
 # Get domain
 echo -e "${YELLOW}🌐 Enter domain name:${NC}"
