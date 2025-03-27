@@ -32,20 +32,40 @@ echo -e "${YELLOW}📦 Updating system and installing prerequisites...${NC}"
 apt-get update
 apt-get install -y software-properties-common
 
-# Add PHP repository
+# Add PHP repository with error checking
 echo -e "${YELLOW}📦 Adding PHP repository...${NC}"
-add-apt-repository -y ppa:ondrej/php
+if ! add-apt-repository -y ppa:ondrej/php; then
+    echo -e "${RED}❌ Failed to add PHP repository${NC}"
+    echo -e "${YELLOW}📦 Trying alternative method...${NC}"
+    apt-get install -y lsb-release ca-certificates apt-transport-https
+    wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
+    echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
+fi
 
 # Update again after adding repository
 apt-get update
 
-# Install PHP and required extensions
+# Install PHP and required extensions with error checking
 echo -e "${YELLOW}📦 Installing PHP and extensions...${NC}"
-apt-get install -y php7.4 php7.4-cli php7.4-common php7.4-mysql php7.4-zip php7.4-gd php7.4-mbstring php7.4-curl php7.4-xml php7.4-bcmath php7.4-fpm php7.4-json php7.4-openssl
+if ! apt-get install -y php7.4 php7.4-cli php7.4-common php7.4-mysql php7.4-zip php7.4-gd php7.4-mbstring php7.4-curl php7.4-xml php7.4-bcmath php7.4-fpm php7.4-json php7.4-openssl; then
+    echo -e "${RED}❌ Failed to install PHP packages${NC}"
+    echo -e "${YELLOW}📦 Trying alternative installation method...${NC}"
+    apt-get install -y php php-cli php-common php-mysql php-zip php-gd php-mbstring php-curl php-xml php-bcmath php-fpm php-json php-openssl
+fi
 
 # Verify PHP installation
 if ! command -v php &> /dev/null; then
     echo -e "${RED}❌ PHP installation failed${NC}"
+    echo -e "${YELLOW}📦 Checking PHP installation status...${NC}"
+    php -v
+    echo -e "${RED}❌ Please check the error messages above and try again${NC}"
+    exit 1
+fi
+
+# Verify PHP version
+PHP_VERSION=$(php -v | head -n 1 | cut -d " " -f 2 | cut -d "." -f 1,2)
+if [[ "$PHP_VERSION" < "7.4" ]]; then
+    echo -e "${RED}❌ PHP version $PHP_VERSION is not compatible. Required version is 7.4 or higher${NC}"
     exit 1
 fi
 
