@@ -47,7 +47,7 @@ apt-get update
 
 # Install PHP and required extensions with error checking
 echo -e "${YELLOW}📦 Installing PHP and extensions...${NC}"
-if ! apt-get install -y php7.4 php7.4-cli php7.4-common php7.4-mysql php7.4-zip php7.4-gd php7.4-mbstring php7.4-curl php7.4-xml php7.4-bcmath php7.4-fpm php7.4-json; then
+if ! apt-get install -y php8.1 php8.1-cli php8.1-common php8.1-mysql php8.1-zip php8.1-gd php8.1-mbstring php8.1-curl php8.1-xml php8.1-bcmath php8.1-fpm php8.1-json; then
     echo -e "${RED}❌ Failed to install PHP packages${NC}"
     echo -e "${YELLOW}📦 Trying alternative installation method...${NC}"
     apt-get install -y php php-cli php-common php-mysql php-zip php-gd php-mbstring php-curl php-xml php-bcmath php-fpm php-json
@@ -64,8 +64,8 @@ fi
 
 # Verify PHP version
 PHP_VERSION=$(php -v | head -n 1 | cut -d " " -f 2 | cut -d "." -f 1,2)
-if [[ "$PHP_VERSION" < "7.4" ]]; then
-    echo -e "${RED}❌ PHP version $PHP_VERSION is not compatible. Required version is 7.4 or higher${NC}"
+if [[ "$PHP_VERSION" < "8.1" ]]; then
+    echo -e "${RED}❌ PHP version $PHP_VERSION is not compatible. Required version is 8.1 or higher${NC}"
     exit 1
 fi
 
@@ -116,11 +116,11 @@ chmod -R 777 $INSTALL_DIR/storage
 
 # Configure PHP-FPM
 echo -e "${YELLOW}⚙️ Configuring PHP-FPM...${NC}"
-cat > /etc/php/7.4/fpm/pool.d/telegram-ads-bot.conf << 'EOL'
+cat > /etc/php/8.1/fpm/pool.d/telegram-ads-bot.conf << 'EOL'
 [telegram-ads-bot]
 user = www-data
 group = www-data
-listen = /run/php/php7.4-fpm-telegram-ads-bot.sock
+listen = /run/php/php8.1-fpm-telegram-ads-bot.sock
 listen.owner = www-data
 listen.group = www-data
 listen.mode = 0660
@@ -129,7 +129,7 @@ pm.max_children = 5
 pm.start_servers = 2
 pm.min_spare_servers = 1
 pm.max_spare_servers = 3
-php_admin_value[error_log] = /var/log/php7.4-fpm-telegram-ads-bot.log
+php_admin_value[error_log] = /var/log/php8.1-fpm-telegram-ads-bot.log
 php_admin_flag[log_errors] = on
 EOL
 
@@ -180,7 +180,7 @@ server {
     }
 
     location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php7.4-fpm-telegram-ads-bot.sock;
+        fastcgi_pass unix:/run/php/php8.1-fpm-telegram-ads-bot.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         include fastcgi_params;
@@ -222,7 +222,7 @@ ufw --force enable
 # Restart services
 echo -e "${YELLOW}🔄 Restarting services...${NC}"
 systemctl restart nginx
-systemctl restart php7.4-fpm
+systemctl restart php8.1-fpm
 systemctl restart mysql
 
 # Configure MySQL
